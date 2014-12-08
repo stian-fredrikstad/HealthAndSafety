@@ -14,7 +14,7 @@ object Boot extends App with SimpleRoutingApp {
 	val camel = CamelExtension(system)
 	val camelContext = camel.context
 
-	object database extends SlickDataSourceInMemory with HealthAndSafetyDatabaseSlickComponent
+	initializeDatabase()
 
 	val healthandsafetyService = system.actorOf(Props[HealthAndSafetyServiceActor], "healthandsafety-service")
 
@@ -51,6 +51,10 @@ object Boot extends App with SimpleRoutingApp {
 		new Settings(config)
 	}
 
+	def initializeDatabase() {
+		DatabaseContext.pageDAO.create()
+	}
+
 }
 
 class Settings(config: Config) {
@@ -64,3 +68,5 @@ class Settings(config: Config) {
 		s"http://$serverHostname:$serverPort"
 	}
 }
+
+object DatabaseContext extends SlickDataSourceInMemory with HealthAndSafetyDatabaseSlickComponent
