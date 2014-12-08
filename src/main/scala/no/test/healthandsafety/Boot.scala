@@ -3,8 +3,7 @@ package no.test.healthandsafety
 import akka.actor.{ActorSystem, Props}
 import akka.camel.CamelExtension
 import com.typesafe.config.{Config, ConfigFactory}
-import no.test.healthandsafety.domain.DBConfig
-import no.test.healthandsafety.infrastructure.StandardDBConfig
+import no.test.healthandsafety.infrastructure.repository.{SlickDataSourceInMemory, HealthAndSafetyDatabaseSlickComponent}
 import spray.routing.SimpleRoutingApp
 
 object Boot extends App with SimpleRoutingApp {
@@ -14,6 +13,8 @@ object Boot extends App with SimpleRoutingApp {
 	var settings = loadSettings(environment)
 	val camel = CamelExtension(system)
 	val camelContext = camel.context
+
+	object database extends SlickDataSourceInMemory with HealthAndSafetyDatabaseSlickComponent
 
 	val healthandsafetyService = system.actorOf(Props[HealthAndSafetyServiceActor], "healthandsafety-service")
 
@@ -49,6 +50,7 @@ object Boot extends App with SimpleRoutingApp {
 
 		new Settings(config)
 	}
+
 }
 
 class Settings(config: Config) {
@@ -61,10 +63,4 @@ class Settings(config: Config) {
 	} else {
 		s"http://$serverHostname:$serverPort"
 	}
-}
-
-object StandardConfiguration {
-	def dbConfig: DBConfig = StandardDBConfig
-	//dao.asInstanceOf[SlickESignDAO].createDB()
-
 }
