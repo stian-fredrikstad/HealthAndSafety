@@ -1,9 +1,10 @@
 package no.test.healthandsafety
 
-import akka.actor.{Actor, ActorLogging, ActorRefFactory}
+import akka.actor._
+import no.test.healthandsafety.PageActorProtocol.{PageNotFound, FindPage}
 import no.test.healthandsafety.model.logical.Page
 import spray.http.StatusCodes
-import spray.routing.{HttpService}
+import spray.routing.{RequestContext, HttpService}
 
 class HealthAndSafetyServiceActor extends Actor with HealthAndSafetyService with ActorLogging {
 	def actorRefFactory: ActorRefFactory = context
@@ -20,6 +21,11 @@ class HealthAndSafetyServiceActor extends Actor with HealthAndSafetyService with
 }
 
 trait HealthAndSafetyService extends HttpService {
+	self: Actor =>
+
+	import akka.pattern._
+
+	val pageActor = context.actorOf(Props[PageActor])
 
 	implicit def executionContext = actorRefFactory.dispatcher
 
@@ -31,20 +37,35 @@ trait HealthAndSafetyService extends HttpService {
 				complete("world")
 			}
 		} ~
-		path("page" / IntNumber) { id =>
-			get { requestContext =>
-				val page = DatabaseContext.pageDAO.find(id)
-				if(page.isDefined) requestContext.complete(page.get)
-				else requestContext.complete(StatusCodes.NotFound)
-			}
-		} ~
-		path("page") {
-			put {
-				entity(as[Page]) { page => requestContext =>
-					val id = DatabaseContext.pageDAO.insert(page)
-					println(page)
-					requestContext.complete(page.copy(id = Some(id)))
+			path("page" / IntNumber) { id =>
+				get { requestContext =>
+					pageActor ? FindPage(id) pipeTo createResponder(requestContext)
+				}
+			} ~
+			path("page") {
+				put {
+					entity(as[Page]) { page => requestContext =>
+						pageActor ? page pipeTo createResponder(requestContext)
+					}
 				}
 			}
-		}
+
+	def createResponder(requestContext: RequestContext) = {
+		val props = Props(new HealthAndSafetyResponder(requestContext))
+		context.actorOf(props)
+	}
+}
+
+class HealthAndSafetyResponder(requestContext: RequestContext) extends Actor with ActorLogging {
+
+	import Json4sProtocol._
+
+	def receive = completeRequest andThen { _ =>
+		self ! PoisonPill
+	}
+
+	def completeRequest: PartialFunction[Any, Unit] = {
+		case p: Page => requestContext.complete(p)
+		case PageNotFound => requestContext.complete(StatusCodes.NotFound)
+	}
 }
