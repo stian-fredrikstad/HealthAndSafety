@@ -48,6 +48,9 @@ trait HealthAndSafetyService extends HttpService {
 						pageActor ? page pipeTo createResponder(requestContext)
 					}
 				}
+			} ~
+			pathPrefix("slides") {
+				getFromResourceDirectory("slides")
 			}
 
 	def createResponder(requestContext: RequestContext) = {
