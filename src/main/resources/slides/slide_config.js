@@ -22,7 +22,7 @@ var SLIDE_CONFIG = {
 
   // Author information
   presenters: [{
-    name: 'Stian Fredrikstad & Matias Vinjevoll',
+    name: 'Håkon Haga, Stian Fredrikstad & Matias Vinjevoll',
     company: 'BEKK',
     gplus: '',
     twitter: '',
