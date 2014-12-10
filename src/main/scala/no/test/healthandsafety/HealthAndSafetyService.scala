@@ -7,21 +7,22 @@ import spray.http.StatusCodes
 import spray.routing.{RequestContext, HttpService}
 
 class HealthAndSafetyServiceActor extends Actor with HealthAndSafetyService with ActorLogging {
-	def actorRefFactory: ActorRefFactory = context
+
+	val logMeassage: PartialFunction[Any, Any] = {
+		case msg =>
+			log.debug("Message: " + msg)
+			msg
+	}
 
 	def receive: Receive = {
-		val logMeassage: PartialFunction[Any, Any] = {
-			case msg => {
-				log.debug("Message: " + msg)
-				msg
-			}
-		}
 		logMeassage andThen runRoute(routes)
 	}
 }
 
 trait HealthAndSafetyService extends HttpService {
 	self: Actor =>
+
+	def actorRefFactory: ActorRefFactory = context
 
 	import akka.pattern._
 
