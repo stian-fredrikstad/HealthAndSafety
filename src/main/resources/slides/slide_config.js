@@ -2,7 +2,7 @@ var SLIDE_CONFIG = {
   // Slide settings
   settings: {
     title: 'Scala',
-    subtitle: 'Erfaringer',
+    subtitle: 'Arkitektur',
     //eventInfo: {
     //  title: 'Google I/O',
     //  date: '6/x/2013'
@@ -22,8 +22,8 @@ var SLIDE_CONFIG = {
 
   // Author information
   presenters: [{
-    name: 'Håkon Haga, Stian Fredrikstad & Matias Vinjevoll',
-    company: 'BEKK',
+    name: 'Prosjekt hos SG Finans AS',
+    company: '',
     gplus: '',
     twitter: '',
     www: '',
