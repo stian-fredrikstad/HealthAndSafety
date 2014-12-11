@@ -6,4 +6,5 @@ trait PageDAO {
 	def insert(page: Page): Int
 	def find(id: Int): Option[Page]
 	def create(): Unit
+	def updateStatus(id: Int, status: String): Unit
 }

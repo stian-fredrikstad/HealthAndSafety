@@ -13,9 +13,9 @@ class DatabaseIntegrationSpec extends FunSpec with Matchers {
 		it("inserts pages with ID") {
 			val pageName = "http://www.test.no"
 			pageDAO.create()
-			val id = pageDAO.insert(Page(pageName))
+			val id = pageDAO.insert(Page(pageName, 1))
 			val persistedPage = pageDAO.find(id)
-			persistedPage shouldBe Some(Page(pageName, Some(id)))
+			persistedPage shouldBe Some(Page(pageName, 1, Some(id)))
 		}
 	}
 }

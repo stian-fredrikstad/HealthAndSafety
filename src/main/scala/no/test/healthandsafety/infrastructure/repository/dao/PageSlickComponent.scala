@@ -16,8 +16,10 @@ trait PageSlickComponent {
 		class Pages(tag: Tag) extends Table[Page](tag, "Page") {
 			def url = column[String]("url")
 			def id = column[Option[Int]]("id", O.AutoInc, O.PrimaryKey)
+			def interval = column[Int]("interval")
+			def status = column[Option[String]]("status")
 
-			def * = (url, id) <>(Page.tupled, Page.unapply)
+			def * = (url, interval, id, status) <>(Page.tupled, Page.unapply)
 		}
 
 		val pages = TableQuery[Pages]
@@ -32,6 +34,10 @@ trait PageSlickComponent {
 
 		def create(): Unit = database withDynSession {
 			pages.ddl.create
+		}
+
+		def updateStatus(id: Int, status: String): Unit = database withDynSession { //TODO Maybe not use dynamic sessions?
+			pages.filter(_.id === id).map(x => x.status).update(Option(status))
 		}
 	}
 }

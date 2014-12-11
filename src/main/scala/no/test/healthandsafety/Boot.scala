@@ -1,7 +1,6 @@
 package no.test.healthandsafety
 
 import akka.actor.{ActorSystem, Props}
-import akka.camel.CamelExtension
 import com.typesafe.config.{Config, ConfigFactory}
 import no.test.healthandsafety.infrastructure.repository.{SlickDataSourceInMemory, HealthAndSafetyDatabaseSlickComponent}
 import spray.routing.SimpleRoutingApp
@@ -11,9 +10,6 @@ object Boot extends App with SimpleRoutingApp {
 	implicit val system = ActorSystem("on-spray-can")
 	val environment = if (args.length == 1) args(0).toString else "development"
 	var settings = loadSettings(environment)
-	val camel = CamelExtension(system)
-	val camelContext = camel.context
-
 	initializeDatabase()
 
 	val healthandsafetyService = system.actorOf(Props[HealthAndSafetyServiceActor], "healthandsafety-service")
