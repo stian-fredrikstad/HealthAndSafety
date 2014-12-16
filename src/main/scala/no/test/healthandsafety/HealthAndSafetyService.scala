@@ -1,8 +1,9 @@
 package no.test.healthandsafety
 
 import akka.actor._
-import no.test.healthandsafety.PageActorProtocol.{PageNotFound, FindPage}
+import no.test.healthandsafety.PageActorProtocol.{ScheduleStarted, ScheduleStopped, PageNotFound, FindPage}
 import no.test.healthandsafety.model.logical.Page
+import no.test.healthandsafety.model.repository.dao.PageId
 import spray.http.StatusCodes
 import spray.routing.{RequestContext, HttpService}
 
@@ -33,26 +34,31 @@ trait HealthAndSafetyService extends HttpService {
 	import Json4sProtocol._
 
 	val routes =
-		path("hello") {
-			get {
-				complete("world")
+		path("page" / IntNumber / "stop") { id =>
+			get { requestContext =>
+				pageActor ? StopSchedule(PageId(id)) pipeTo createResponder(requestContext)
 			}
 		} ~
-			path("page" / IntNumber) { id =>
-				get { requestContext =>
-					pageActor ? FindPage(id) pipeTo createResponder(requestContext)
-				}
-			} ~
-			path("page") {
-				put {
-					entity(as[Page]) { page => requestContext =>
-						pageActor ? page pipeTo createResponder(requestContext)
-					}
-				}
-			} ~
-			pathPrefix("slides") {
-				getFromResourceDirectory("slides")
+		path("page" / IntNumber / "start") { id =>
+			get { requestContext =>
+				pageActor ? StartSchedule(PageId(id)) pipeTo createResponder(requestContext)
 			}
+		} ~
+		path("page" / IntNumber) { id =>
+			get { requestContext =>
+				pageActor ? FindPage(id) pipeTo createResponder(requestContext)
+			}
+		} ~
+		path("page") {
+			put {
+				entity(as[Page]) { page => requestContext =>
+					pageActor ? page pipeTo createResponder(requestContext)
+				}
+			}
+		} ~
+		pathPrefix("slides") {
+			getFromResourceDirectory("slides")
+		}
 
 	def createResponder(requestContext: RequestContext) = {
 		val props = Props(new HealthAndSafetyResponder(requestContext))
@@ -71,5 +77,7 @@ class HealthAndSafetyResponder(requestContext: RequestContext) extends Actor wit
 	def completeRequest: PartialFunction[Any, Unit] = {
 		case p: Page => requestContext.complete(p)
 		case PageNotFound => requestContext.complete(StatusCodes.NotFound)
+		case ScheduleStopped => requestContext.complete(StatusCodes.OK)
+		case ScheduleStarted => requestContext.complete(StatusCodes.OK)
 	}
 }

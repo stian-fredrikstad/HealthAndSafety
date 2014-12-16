@@ -10,7 +10,7 @@ class HealthCheckActor extends Actor with ActorLogging {
 
   def receive: Receive = {
     case p: Page =>
-      log.debug(s"Checking ${p.url}")
+      log.debug(s"Checking $p")
       val response: HttpResponse[String] = Http(p.url).asString
       p.id.map(i => DatabaseContext.pageDAO.updateStatus(i, response.statusLine))
   }
