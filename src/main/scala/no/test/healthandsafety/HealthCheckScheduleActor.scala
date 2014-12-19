@@ -8,17 +8,18 @@ import scala.concurrent.duration._
 case class StopSchedule(id: PageId)
 case class StartSchedule(id: PageId)
 
-class HealthCheckScheduleActor extends Actor with ActorLogging {
+class HealthCheckScheduleActor(actorProps: HealthCheckActorProps,
+                               databaseManager: HealthAndSafetyDatabaseManager) extends Actor with ActorLogging {
 
   implicit def executionContext = context.dispatcher
-  val healthCheckActor = context.actorOf(Props[HealthCheckActor])
+  val healthCheckActor = context.actorOf(actorProps.healthCheckActor)
 
   var schedules: Map[PageId, Cancellable] = Map.empty
 
   def receive: Receive = {
     case StartSchedule(id) => {
       log.debug(s"Trying to start schedule for id: $id")
-      DatabaseContext.pageDAO.find(id.id).foreach(p => {
+      databaseManager.find(id.id).foreach(p => {
         val cancellableHealthCheckActor: Cancellable = schedules.getOrElse(id,
           context.system.scheduler.schedule(0 milliseconds,
             p.interval seconds,

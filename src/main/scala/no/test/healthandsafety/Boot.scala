@@ -2,7 +2,7 @@ package no.test.healthandsafety
 
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.{Config, ConfigFactory}
-import no.test.healthandsafety.infrastructure.repository.{SlickDataSourceInMemory, HealthAndSafetyDatabaseSlickComponent}
+import no.test.healthandsafety.infrastructure.repository.{SlickDataSourceInMemory, SlickDataSource, HealthAndSafetyDatabaseSlickComponent}
 import spray.routing.SimpleRoutingApp
 
 object Boot extends App with SimpleRoutingApp {
@@ -10,9 +10,8 @@ object Boot extends App with SimpleRoutingApp {
 	implicit val system = ActorSystem("on-spray-can")
 	val environment = if (args.length == 1) args(0).toString else "development"
 	var settings = loadSettings(environment)
-	initializeDatabase()
 
-	val healthandsafetyService = system.actorOf(Props[HealthAndSafetyServiceActor], "healthandsafety-service")
+	val healthandsafetyService = system.actorOf(Props(classOf[HealthAndSafetyServiceActor], StandardConfiguration), "healthandsafety-service")
 
 	startServer(interface = settings.serverInterface, port = settings.serverPort) {
 		pathPrefix("test") { ctx => healthandsafetyService ! ctx}
@@ -46,11 +45,6 @@ object Boot extends App with SimpleRoutingApp {
 
 		new Settings(config)
 	}
-
-	def initializeDatabase() {
-		DatabaseContext.pageDAO.create()
-	}
-
 }
 
 class Settings(config: Config) {
@@ -65,4 +59,6 @@ class Settings(config: Config) {
 	}
 }
 
-object DatabaseContext extends SlickDataSourceInMemory with HealthAndSafetyDatabaseSlickComponent
+object StandardConfiguration extends StandardHealthCheckActorProps with HealthAndSafetyDatabaseManagerConfig {
+	pageDAO.create()
+}

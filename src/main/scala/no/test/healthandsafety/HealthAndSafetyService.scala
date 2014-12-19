@@ -7,7 +7,8 @@ import no.test.healthandsafety.model.repository.dao.PageId
 import spray.http.StatusCodes
 import spray.routing.{RequestContext, HttpService}
 
-class HealthAndSafetyServiceActor extends Actor with HealthAndSafetyService with ActorLogging {
+class HealthAndSafetyServiceActor(val healthCheckActorProps: HealthCheckActorProps) extends Actor with HealthAndSafetyService with ActorLogging {
+	def actorRefFactory: ActorRefFactory = context
 
 	val logMeassage: PartialFunction[Any, Any] = {
 		case msg =>
@@ -23,11 +24,11 @@ class HealthAndSafetyServiceActor extends Actor with HealthAndSafetyService with
 trait HealthAndSafetyService extends HttpService {
 	self: Actor =>
 
-	def actorRefFactory: ActorRefFactory = context
-
 	import akka.pattern._
 
-	val pageActor = context.actorOf(Props[PageActor])
+	def healthCheckActorProps: HealthCheckActorProps
+
+	val pageActor = actorRefFactory.actorOf(healthCheckActorProps.pageActorProps, "page-actor")
 
 	implicit def executionContext = actorRefFactory.dispatcher
 
@@ -51,7 +52,7 @@ trait HealthAndSafetyService extends HttpService {
 		} ~
 		path("page") {
 			put {
-				entity(as[Page]) { page => requestContext =>
+				entity(as[NewPageJSON]) { page => requestContext =>
 					pageActor ? page pipeTo createResponder(requestContext)
 				}
 			}
